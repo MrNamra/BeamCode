@@ -581,7 +581,14 @@ async function start() {
   }
 }
 
-// Start if executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Start if executed directly or under process managers (like PM2)
+const isMain =
+  !process.env.VITEST &&
+  (import.meta.url === `file://${process.argv[1]}` ||
+    Boolean(process.env.pm_id) ||
+    Boolean(process.env.PM2_HOME) ||
+    process.env.NODE_ENV !== 'test');
+
+if (isMain) {
   start();
 }
