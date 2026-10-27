@@ -303,7 +303,7 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
             await handleSenderSignal(session, sig);
           }
 
-          await session.waitForChannelsOpen(4, 30000);
+          await session.waitForChannelsOpen(1, 60000);
 
           // Perform control handshake
           const manifestFiles = get().selectedFiles.map((f) => f.meta);
@@ -377,7 +377,8 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
       });
 
       signaling.on('close', () => {
-        if (get().senderStep === 'transferring' || get().senderStep === 'connecting') {
+        // Once WebRTC data channels are active, signaling closure must not fail the transfer (e.g. for long 12GB+ transfers)
+        if (get().senderStep === 'connecting' || get().senderStep === 'creating_code') {
           set({ senderStep: 'failed', errorMessage: 'Signaling connection closed' });
         }
       });
@@ -481,7 +482,7 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
         if (transferStarted) return;
         transferStarted = true;
 
-        await session.waitForChannelsOpen(4, 30000);
+        await session.waitForChannelsOpen(1, 60000);
 
         // Perform receiver handshake
         const handshake = await performReceiverHandshake({
@@ -509,8 +510,19 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
             if (saveAsZip && filesToReceive.length > 1) {
               const memorySink = new MemoryBlobSink();
               sink = new ZipSink(memorySink);
-            } else if (caps.hasServiceWorker && navigator.serviceWorker?.controller) {
-              sink = new ServiceWorkerStreamSink();
+            } else if (caps.hasServiceWorker) {
+              if (!navigator.serviceWorker.controller) {
+                try {
+                  await navigator.serviceWorker.ready;
+                } catch {
+                  // ignore
+                }
+              }
+              if (navigator.serviceWorker.controller) {
+                sink = new ServiceWorkerStreamSink();
+              } else {
+                sink = new MemoryBlobSink();
+              }
             } else {
               sink = new MemoryBlobSink();
             }
@@ -653,7 +665,8 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
       });
 
       signaling.on('close', () => {
-        if (get().receiverStep === 'transferring' || get().receiverStep === 'connecting') {
+        // Once WebRTC data channels are active, signaling closure must not fail the transfer (e.g. for long 12GB+ transfers)
+        if (get().receiverStep === 'connecting' || get().receiverStep === 'connecting_code') {
           set({ receiverStep: 'failed', errorMessage: 'Signaling connection closed' });
         }
       });

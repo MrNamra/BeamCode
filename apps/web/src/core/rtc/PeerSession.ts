@@ -107,7 +107,7 @@ export class PeerSession {
   }
 
   async addIceCandidate(candidate: RTCIceCandidateInit | null): Promise<void> {
-    if (!candidate) return;
+    if (!candidate || !candidate.candidate) return;
 
     if (!this.hasRemoteDescription) {
       this.remoteCandidateQueue.push(candidate);
@@ -124,7 +124,7 @@ export class PeerSession {
   private async flushQueuedCandidates(): Promise<void> {
     while (this.remoteCandidateQueue.length > 0) {
       const cand = this.remoteCandidateQueue.shift();
-      if (cand) {
+      if (cand && cand.candidate) {
         try {
           await this.pc.addIceCandidate(new RTCIceCandidate(cand));
         } catch (err) {
@@ -134,7 +134,7 @@ export class PeerSession {
     }
   }
 
-  async waitForChannelsOpen(channelCount = 1, timeoutMs = 30000): Promise<void> {
+  async waitForChannelsOpen(channelCount = 1, timeoutMs = 60000): Promise<void> {
     const channelsToCheck = [this.ctrlChannel, ...this.dataChannels.slice(0, channelCount)];
 
     await Promise.all(
@@ -147,7 +147,11 @@ export class PeerSession {
             }
 
             const timer = setTimeout(() => {
-              reject(new Error(`Timeout waiting for channel ${ch.label} to open`));
+              reject(
+                new Error(
+                  `Timeout waiting for channel ${ch.label} to open (state: ${ch.readyState}, ICE: ${this.pc.iceConnectionState})`
+                )
+              );
             }, timeoutMs);
 
             ch.onopen = () => {
