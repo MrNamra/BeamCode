@@ -24,9 +24,16 @@ services:
       - "443:443"
     environment:
       PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - signal
     restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
 
   # Optional TURN relay service (enable when TURN fallback is needed)
   # coturn:

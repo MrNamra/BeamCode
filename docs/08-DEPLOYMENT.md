@@ -15,7 +15,7 @@
 
 | Var | Default | Description |
 |---|---|---|
-| `PORT` | `8080` | Listen port |
+| `PORT` | `8080` |    |
 | `PUBLIC_ORIGIN` | — (required in prod) | e.g. `https://share.example.com` (WS origin check) |
 | `TRUST_PROXY` | `true` behind Caddy | Honor `X-Forwarded-For` |
 | `CODE_TTL_SECONDS` | `600` | Waiting-code lifetime |

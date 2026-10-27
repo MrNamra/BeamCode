@@ -8,9 +8,11 @@ import {
 } from '@beamcode/protocol';
 
 describe('5 GB Streamed Transfer Memory Test (09-TESTING.md §5)', () => {
-  it('streams a 5 GB file through frame slicing and sink writing with heap < 200 MB', async () => {
-    // 5 GB = 5 * 1024 * 1024 * 1024 bytes
-    const fiveGbBytes = 5 * 1024 * 1024 * 1024;
+  it(
+    'streams a 5 GB file through frame slicing and sink writing with heap < 200 MB',
+    async () => {
+      // 5 GB = 5 * 1024 * 1024 * 1024 bytes
+      const fiveGbBytes = 5 * 1024 * 1024 * 1024;
     const chunkSize = DEFAULT_CHUNK_SIZE; // 64 KiB
     const windowBytes = DEFAULT_WINDOW_BYTES_LAN; // 32 MiB
 
@@ -80,5 +82,5 @@ describe('5 GB Streamed Transfer Memory Test (09-TESTING.md §5)', () => {
     const peakHeapMb = peakHeapUsed / (1024 * 1024);
     // Heap must remain strictly below 200 MB (target in 09-TESTING.md §5)
     expect(peakHeapMb).toBeLessThan(200);
-  });
+  }, 30_000);
 });

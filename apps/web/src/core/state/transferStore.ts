@@ -119,8 +119,12 @@ function getSignalUrl(): string {
     .VITE_SIGNAL_URL;
   if (envUrl) return envUrl;
   if (typeof window !== 'undefined') {
+    // In local Vite development mode (port 5173), connect directly to signal dev server on 8080
+    if (window.location.port === '5173') {
+      return `ws://${window.location.hostname}:8080/ws`;
+    }
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${proto}//${window.location.hostname}:8080/ws`;
+    return `${proto}//${window.location.host}/ws`;
   }
   return 'ws://localhost:8080/ws';
 }
