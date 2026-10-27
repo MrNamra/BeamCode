@@ -1,12 +1,28 @@
 import { ArrowLeft, KeyRound, Radio, Zap, HardDrive } from 'lucide-react';
 
-export function HowItWorksPage() {
+interface HowItWorksProps {
+  onNavigate?: (path: string) => void;
+}
+
+export function HowItWorksPage({ onNavigate }: HowItWorksProps) {
+  const handleBack = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onNavigate) {
+      onNavigate('/');
+    } else {
+      window.history.pushState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  };
+
   return (
     <div className="flex-1 max-w-[760px] mx-auto w-full py-8 px-4 space-y-8 animate-in fade-in">
       <div>
         <a
           href="/"
-          className="inline-flex items-center text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline mb-4"
+          onClick={handleBack}
+          className="inline-flex items-center text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md py-0.5"
+          data-testid="back-to-home"
         >
           <ArrowLeft className="w-3.5 h-3.5 mr-1" />
           Back to home
@@ -38,11 +54,11 @@ export function HowItWorksPage() {
             <Radio className="w-5 h-5" />
           </div>
           <h2 className="font-bold text-base text-slate-900 dark:text-slate-100">
-            2. Receiver Joins & Approves
+            2. Enter Key & Instant Transfer
           </h2>
           <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            The receiver enters the 6-digit key or scans the QR code. The sender sees the
-            receiver's device name and clicks Accept to lock the key.
+            The receiver enters the 6-digit key or opens the direct link. The transfer starts
+            automatically without requiring manual approval clicks.
           </p>
         </div>
 

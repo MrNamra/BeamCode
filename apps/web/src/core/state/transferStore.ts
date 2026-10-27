@@ -472,6 +472,126 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
       let peerIdSender = '';
       const queuedSignals: SignalData[] = [];
 
+      let transferStarted = false;
+      async function onOfferHandled(session: PeerSession) {
+        if (transferStarted) return;
+        transferStarted = true;
+
+        await session.waitForChannelsOpen(4, 30000);
+
+        // Perform receiver handshake
+        const handshake = await performReceiverHandshake({
+          ctrlChannel: session.ctrlChannel,
+          chooseAcceptance: async (manifest) => {
+            // Store manifest files
+            const items: SelectedFileItem[] = manifest.files.map((m) => ({
+              file: new Blob([]),
+              meta: m,
+              checked: true,
+            }));
+
+            set({
+              selectedFiles: items,
+              receiverStep: 'connecting',
+              senderDeviceName: manifest.transferId,
+            });
+
+            // Determine destination sink
+            const caps = detectBrowserCapabilities();
+            const saveAsZip = get().saveAsZip;
+            const filesToReceive = items.map((f) => f.meta);
+
+            let sink: Sink;
+            if (saveAsZip && filesToReceive.length > 1) {
+              const memorySink = new MemoryBlobSink();
+              sink = new ZipSink(memorySink);
+            } else if (caps.hasServiceWorker && navigator.serviceWorker?.controller) {
+              sink = new ServiceWorkerStreamSink();
+            } else {
+              sink = new MemoryBlobSink();
+            }
+
+            activeSink = sink;
+            await sink.init(filesToReceive);
+
+            const sinkType: 'fs' | 'sw' | 'memory' =
+              sink instanceof ServiceWorkerStreamSink ? 'sw' : 'memory';
+
+            return {
+              accept: true,
+              sink: sinkType,
+              channels: 4,
+              chunkSize: DEFAULT_CHUNK_SIZE,
+              windowBytes: DEFAULT_WINDOW_BYTES_LAN,
+              files: filesToReceive.map((f) => f.index),
+            };
+          },
+        });
+
+        if (!handshake.accepted) {
+          set({ receiverStep: 'declined' });
+          return;
+        }
+
+        set({ receiverStep: 'transferring' });
+        if (!activeWakeLock) activeWakeLock = new WakeLockManager();
+        await activeWakeLock.request();
+
+        const receiverTransfer = new ReceiverTransfer({
+          ctrlChannel: session.ctrlChannel,
+          dataChannels: session.dataChannels,
+          sink: activeSink!,
+          files: handshake.files,
+          totalExpectedBytes: handshake.totalSize,
+          windowBytes: handshake.windowBytes,
+          onProgress: (p) => {
+            const percent = p.totalBytes > 0 ? (p.bytesReceived / p.totalBytes) * 100 : 100;
+            set({
+              progress: {
+                bytesDone: p.bytesReceived,
+                totalBytes: p.totalBytes,
+                percent: Math.min(100, Math.round(percent)),
+                speedMBs: p.speedMBs,
+                eta: p.eta,
+              },
+            });
+          },
+          onDone: () => {
+            activeWakeLock?.release();
+            activeWakeLock = null;
+            if (connectionCheckTimer) clearInterval(connectionCheckTimer);
+
+            // Auto-trigger browser download for received files
+            if (activeSink instanceof MemoryBlobSink) {
+              const completed = activeSink.getCompletedFiles();
+              for (const f of completed) {
+                const url = URL.createObjectURL(f.blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = f.name;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                  URL.revokeObjectURL(url);
+                  a.remove();
+                }, 1000);
+              }
+            }
+
+            set({ receiverStep: 'completed' });
+          },
+          onError: (err) => {
+            activeWakeLock?.release();
+            activeWakeLock = null;
+            if (connectionCheckTimer) clearInterval(connectionCheckTimer);
+            set({ receiverStep: 'failed', errorMessage: err.message });
+          },
+        });
+
+        activeReceiverTransfer = receiverTransfer;
+        await receiverTransfer.waitForCompletion();
+      }
+
       async function handleReceiverSignal(session: PeerSession, data: SignalData) {
         if (data.kind === 'offer') {
           const answer = await session.handleOffer(data.sdp);
@@ -482,119 +602,13 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
             data: { kind: 'answer', sdp: answer.sdp! },
           });
 
-          await session.waitForChannelsOpen(4, 30000);
-
-          // Perform receiver handshake
-          const handshake = await performReceiverHandshake({
-            ctrlChannel: session.ctrlChannel,
-            chooseAcceptance: async (manifest) => {
-              // Store manifest files
-              const items: SelectedFileItem[] = manifest.files.map((m) => ({
-                file: new Blob([]),
-                meta: m,
-                checked: true,
-              }));
-
-              set({
-                selectedFiles: items,
-                receiverStep: 'connecting',
-                senderDeviceName: manifest.transferId,
-              });
-
-              // Determine destination sink
-              const caps = detectBrowserCapabilities();
-              const saveAsZip = get().saveAsZip;
-              const filesToReceive = items.map((f) => f.meta);
-
-              let sink: Sink;
-              if (saveAsZip && filesToReceive.length > 1) {
-                const memorySink = new MemoryBlobSink();
-                sink = new ZipSink(memorySink);
-              } else if (caps.hasServiceWorker && navigator.serviceWorker?.controller) {
-                sink = new ServiceWorkerStreamSink();
-              } else {
-                sink = new MemoryBlobSink();
-              }
-
-              activeSink = sink;
-              await sink.init(filesToReceive);
-
-              const sinkType: 'fs' | 'sw' | 'memory' =
-                sink instanceof ServiceWorkerStreamSink ? 'sw' : 'memory';
-
-              return {
-                accept: true,
-                sink: sinkType,
-                channels: 4,
-                chunkSize: DEFAULT_CHUNK_SIZE,
-                windowBytes: DEFAULT_WINDOW_BYTES_LAN,
-                files: filesToReceive.map((f) => f.index),
-              };
-            },
+          // Run channels and transfer asynchronously so ICE candidates are never blocked
+          onOfferHandled(session).catch((err) => {
+            activeWakeLock?.release();
+            activeWakeLock = null;
+            if (connectionCheckTimer) clearInterval(connectionCheckTimer);
+            set({ receiverStep: 'failed', errorMessage: err.message });
           });
-
-          if (!handshake.accepted) {
-            set({ receiverStep: 'declined' });
-            return;
-          }
-
-          set({ receiverStep: 'transferring' });
-          if (!activeWakeLock) activeWakeLock = new WakeLockManager();
-          await activeWakeLock.request();
-
-          const receiverTransfer = new ReceiverTransfer({
-            ctrlChannel: session.ctrlChannel,
-            dataChannels: session.dataChannels,
-            sink: activeSink!,
-            files: handshake.files,
-            totalExpectedBytes: handshake.totalSize,
-            windowBytes: handshake.windowBytes,
-            onProgress: (p) => {
-              const percent = p.totalBytes > 0 ? (p.bytesReceived / p.totalBytes) * 100 : 100;
-              set({
-                progress: {
-                  bytesDone: p.bytesReceived,
-                  totalBytes: p.totalBytes,
-                  percent: Math.min(100, Math.round(percent)),
-                  speedMBs: p.speedMBs,
-                  eta: p.eta,
-                },
-              });
-            },
-            onDone: () => {
-              activeWakeLock?.release();
-              activeWakeLock = null;
-              if (connectionCheckTimer) clearInterval(connectionCheckTimer);
-
-              // Auto-trigger browser download for received files
-              if (activeSink instanceof MemoryBlobSink) {
-                const completed = activeSink.getCompletedFiles();
-                for (const f of completed) {
-                  const url = URL.createObjectURL(f.blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = f.name;
-                  document.body.appendChild(a);
-                  a.click();
-                  setTimeout(() => {
-                    URL.revokeObjectURL(url);
-                    a.remove();
-                  }, 1000);
-                }
-              }
-
-              set({ receiverStep: 'completed' });
-            },
-            onError: (err) => {
-              activeWakeLock?.release();
-              activeWakeLock = null;
-              if (connectionCheckTimer) clearInterval(connectionCheckTimer);
-              set({ receiverStep: 'failed', errorMessage: err.message });
-            },
-          });
-
-          activeReceiverTransfer = receiverTransfer;
-          await receiverTransfer.waitForCompletion();
         } else if (data.kind === 'ice') {
           await session.addIceCandidate(data.candidate);
         }

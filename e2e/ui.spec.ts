@@ -94,6 +94,17 @@ test.describe('Phase 4 UI - Responsive & Theming Screenshots', () => {
     await expect(dropdown).not.toBeVisible();
   });
 
+  test('verifies /how-it-works instructions and SPA back-to-home navigation', async ({ page }) => {
+    await page.goto('/how-it-works');
+    await expect(page.locator('text=2. Enter Key & Instant Transfer')).toBeVisible();
+    await expect(page.locator('text=Receiver Joins & Approves')).not.toBeVisible();
+
+    // Click back to home
+    await page.click('[data-testid="back-to-home"]');
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('[data-testid="send-card"]')).toBeVisible();
+  });
+
   test('verifies deep link /r/:code opens receive card and auto-joins', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/r/482019');

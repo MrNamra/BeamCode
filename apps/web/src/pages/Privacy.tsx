@@ -1,12 +1,28 @@
 import { Shield, EyeOff, Server, Lock, ArrowLeft } from 'lucide-react';
 
-export function PrivacyPage() {
+interface PrivacyProps {
+  onNavigate?: (path: string) => void;
+}
+
+export function PrivacyPage({ onNavigate }: PrivacyProps) {
+  const handleBack = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onNavigate) {
+      onNavigate('/');
+    } else {
+      window.history.pushState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  };
+
   return (
     <div className="flex-1 max-w-[760px] mx-auto w-full py-8 px-4 space-y-8 animate-in fade-in">
       <div>
         <a
           href="/"
-          className="inline-flex items-center text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline mb-4"
+          onClick={handleBack}
+          className="inline-flex items-center text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md py-0.5"
+          data-testid="back-to-home"
         >
           <ArrowLeft className="w-3.5 h-3.5 mr-1" />
           Back to home

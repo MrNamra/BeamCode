@@ -32,9 +32,9 @@ export function App() {
   // Route matching
   let pageContent: React.ReactNode = null;
   if (currentPath === '/privacy') {
-    pageContent = <PrivacyPage />;
+    pageContent = <PrivacyPage onNavigate={navigate} />;
   } else if (currentPath === '/how-it-works') {
-    pageContent = <HowItWorksPage />;
+    pageContent = <HowItWorksPage onNavigate={navigate} />;
   } else if (currentPath.startsWith('/r/')) {
     const code = currentPath.slice(3).trim();
     pageContent = <HomePage initialCode={code} />;
