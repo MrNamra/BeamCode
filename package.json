@@ -1,0 +1,29 @@
+{
+  "name": "beamcode-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -p \"[{name}]\" -n \"signal,web\" -c \"cyan,magenta\" \"pnpm --filter @beamcode/signal dev\" \"pnpm --filter @beamcode/web dev\"",
+    "build": "pnpm --filter @beamcode/protocol build:optional && pnpm --filter @beamcode/signal build && pnpm --filter @beamcode/web build",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "vitest run",
+    "e2e": "playwright test",
+    "bench": "tsx scripts/bench.ts",
+    "preinstall": "node -e \"require('fs').existsSync('.git/hooks/code-guardian/git-hooks/checkInstall.cjs') && require('child_process').execFileSync('node', ['.git/hooks/code-guardian/git-hooks/checkInstall.cjs'], {stdio:'inherit'})\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@playwright/test": "^1.50.1",
+    "@types/node": "^22.13.5",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.21.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.1",
+    "vitest": "^3.0.7"
+  }
+}

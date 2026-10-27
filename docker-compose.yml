@@ -1,0 +1,37 @@
+services:
+  signal:
+    build:
+      context: .
+      dockerfile: apps/signal/Dockerfile
+    environment:
+      PORT: 8080
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost}
+      TRUST_PROXY: "true"
+      STUN_URLS: stun:stun.l.google.com:19302
+      # TURN_URLS: turn:turn.example.com:3478?transport=udp
+      # TURN_STATIC_AUTH_SECRET: ${TURN_SECRET}
+    read_only: true
+    user: "1000:1000"
+    restart: unless-stopped
+    # No volumes on purpose: nothing is stored on the server
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
+    depends_on:
+      - signal
+    restart: unless-stopped
+
+  # Optional TURN relay service (enable when TURN fallback is needed)
+  # coturn:
+  #   image: coturn/coturn:latest
+  #   network_mode: host
+  #   volumes:
+  #     - ./turnserver.conf:/etc/coturn/turnserver.conf:ro
+  #   restart: unless-stopped

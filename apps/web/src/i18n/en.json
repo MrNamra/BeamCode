@@ -1,0 +1,100 @@
+{
+  "brand": "BeamCode",
+  "nav": {
+    "howItWorks": "How it works",
+    "privacy": "Privacy"
+  },
+  "trust": "Files go straight from device to device. Nothing is stored on our servers.",
+  "tabs": {
+    "send": "Send",
+    "receive": "Receive"
+  },
+  "send": {
+    "title": "Send",
+    "selectFiles": "Select files",
+    "dropHere": "or drop them here",
+    "dropToAdd": "Drop to add files",
+    "selectFolder": "Select folder",
+    "addMore": "Add more",
+    "sendButton": "Send",
+    "mobileWarning": "Receiving > 2 GB on mobile without streaming may run low on memory.",
+    "filesCount": "{{count}} files · {{size}}",
+    "oneFileCount": "1 file · {{size}}"
+  },
+  "codeDisplay": {
+    "yourKey": "Your key",
+    "expiresIn": "Key expires in {{time}}",
+    "copy": "Copy",
+    "copied": "Copied to clipboard",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied to clipboard",
+    "scanToReceive": "Scan to receive",
+    "waiting": "Waiting for receiver…",
+    "joinRequest": "{{name}} wants to receive",
+    "accept": "Accept",
+    "decline": "Decline",
+    "connecting": "Connecting…",
+    "transferring": "Sending…",
+    "cancel": "Cancel",
+    "keepOpen": "Keep this tab open until the transfer finishes."
+  },
+  "receive": {
+    "title": "Receive",
+    "enterKey": "Enter 6-digit key",
+    "button": "Receive",
+    "notFound": "Key not found or no longer available.",
+    "rateLimited": "Too many attempts. Try again in 40 s.",
+    "waitingApproval": "Waiting for sender approval…",
+    "connecting": "Connecting to sender…"
+  },
+  "review": {
+    "title": "{{name}} is sending you {{count}} files ({{size}})",
+    "titleOne": "{{name}} is sending you 1 file ({{size}})",
+    "saveAsZip": "Save as ZIP",
+    "streamDirect": "Files stream straight to your device.",
+    "chooseFolder": "Choose folder",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "progress": {
+    "sending": "Sending…",
+    "receiving": "Receiving…",
+    "speed": "{{speed}} MB/s",
+    "eta": "ETA {{eta}}",
+    "cancel": "Cancel"
+  },
+  "results": {
+    "completedSender": "Sent! Your key has expired.",
+    "sendMore": "Send more",
+    "completedReceiver": "Received {{count}} files.",
+    "completedReceiverOne": "Received 1 file.",
+    "receiveAnother": "Receive another",
+    "expired": "This key expired.",
+    "newKey": "Get a new key",
+    "declined": "The other side declined.",
+    "tryAgain": "Try again",
+    "failed": "Connection lost. Start again.",
+    "cantConnect": "Could not connect to peer.",
+    "troubleshootingTitle": "Troubleshooting:",
+    "troubleshoot1": "Are both devices connected to the internet or same Wi-Fi?",
+    "troubleshoot2": "If on corporate / campus Wi-Fi, try a mobile hotspot.",
+    "unsupported": "Please use a recent Chrome, Edge, Firefox, or Safari."
+  },
+  "gating": {
+    "fsAccess": "Direct to disk (streamed)",
+    "serviceWorker": "Download stream (Service Worker)",
+    "memory": "Memory (large files may fail)"
+  },
+  "badge": {
+    "lan": "LAN",
+    "lanTooltip": "Direct peer connection on local network",
+    "direct": "Direct",
+    "directTooltip": "Direct peer-to-peer connection via WebRTC",
+    "relay": "Relay",
+    "relayTooltip": "Connection routed via encrypted TURN relay"
+  },
+  "pwa": {
+    "install": "Install App",
+    "installed": "App installed"
+  }
+}
