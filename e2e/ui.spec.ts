@@ -139,6 +139,16 @@ test.describe('Phase 4 UI - Responsive & Theming Screenshots', () => {
     // File item should be visible in FileList
     await expect(senderPage.locator('[data-testid="file-list-items"]')).toContainText('hello-beamcode.txt');
 
+    // Add more files using Add more input
+    const secondFile = {
+      name: 'second-file.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('image-content-bytes'),
+    };
+    await senderPage.setInputFiles('[data-testid="add-more-input"]', [secondFile]);
+    await expect(senderPage.locator('[data-testid="file-list-items"]')).toContainText('second-file.png');
+    await expect(senderPage.locator('text=2 files')).toBeVisible();
+
     // 3. Sender clicks Send
     await senderPage.click('[data-testid="send-action-button"]');
 

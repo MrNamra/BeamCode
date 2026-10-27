@@ -110,12 +110,7 @@ export function HomePage({ initialCode = '' }: HomeProps) {
               <FileList
                 files={selectedFiles}
                 onRemove={removeFile}
-                onAddMore={() => {
-                  const input = document.querySelector<HTMLInputElement>(
-                    '[data-testid="file-input"]'
-                  );
-                  input?.click();
-                }}
+                onAddFiles={addFiles}
                 onSend={startSending}
                 isSending={senderStep === 'creating_code'}
               />

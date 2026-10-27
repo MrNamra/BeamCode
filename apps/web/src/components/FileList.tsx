@@ -1,11 +1,13 @@
-import { FileText, Image, Video, Music, Archive, File as FileIcon, X, Plus } from 'lucide-react';
+import { useRef, useState, useEffect } from 'react';
+import { FileText, Image, Video, Music, Archive, File as FileIcon, X, Plus, UploadCloud } from 'lucide-react';
 import { SelectedFileItem } from '../core/state/transferStore.js';
 import { useTranslation } from '../i18n/index.js';
 
 interface FileListProps {
   files: SelectedFileItem[];
   onRemove: (index: number) => void;
-  onAddMore: () => void;
+  onAddFiles?: (files: File[]) => void;
+  onAddMore?: () => void;
   onSend: () => void;
   isSending?: boolean;
 }
@@ -54,15 +56,99 @@ export function getFileIcon(mime: string, name: string) {
   return <FileIcon className="w-5 h-5 text-slate-500" />;
 }
 
-export function FileList({ files, onRemove, onAddMore, onSend, isSending }: FileListProps) {
+export function FileList({
+  files,
+  onRemove,
+  onAddFiles,
+  onAddMore,
+  onSend,
+  isSending,
+}: FileListProps) {
   const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const totalBytes = files.reduce((acc, f) => acc + f.meta.size, 0);
   const totalCount = files.length;
   const isLargeTransfer = totalBytes > 2 * 1024 * 1024 * 1024; // > 2 GB
 
+  const handleAddMoreClick = () => {
+    onAddMore?.();
+    fileInputRef.current?.click();
+  };
+
+  const handleFilesSelected = (selected: File[]) => {
+    if (selected.length > 0) {
+      onAddFiles?.(selected);
+    }
+  };
+
+  // Drag and drop additional files directly onto the list
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFilesSelected(Array.from(e.dataTransfer.files));
+    }
+  };
+
+  // Paste additional files directly
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (e.clipboardData && e.clipboardData.files.length > 0) {
+        handleFilesSelected(Array.from(e.clipboardData.files));
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [onAddFiles]);
+
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`relative flex flex-col h-full space-y-4 rounded-xl transition-all ${
+        isDragOver ? 'ring-2 ring-blue-500 bg-blue-50/20 dark:bg-blue-950/20' : ''
+      }`}
+    >
+      {/* Hidden file input for adding more files */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            handleFilesSelected(Array.from(e.target.files));
+            e.target.value = '';
+          }
+        }}
+        data-testid="add-more-input"
+      />
+
+      {isDragOver && (
+        <div className="absolute inset-0 bg-blue-500/10 dark:bg-blue-500/20 border-2 border-dashed border-blue-500 rounded-xl flex items-center justify-center z-10 pointer-events-none">
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-semibold text-sm">
+            <UploadCloud className="w-5 h-5 animate-bounce" />
+            <span>{t('send.dropToAdd')}</span>
+          </div>
+        </div>
+      )}
+
       {/* File items list */}
       <div
         className="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 pr-1 -mr-1"
@@ -93,6 +179,7 @@ export function FileList({ files, onRemove, onAddMore, onSend, isSending }: File
               onClick={() => onRemove(idx)}
               className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
               aria-label={`Remove ${item.meta.name}`}
+              data-testid={`remove-file-${idx}`}
             >
               <X className="w-4 h-4" />
             </button>
@@ -109,8 +196,9 @@ export function FileList({ files, onRemove, onAddMore, onSend, isSending }: File
         </span>
         <button
           type="button"
-          onClick={onAddMore}
-          className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+          onClick={handleAddMoreClick}
+          className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md py-0.5"
+          data-testid="add-more-button"
         >
           <Plus className="w-3.5 h-3.5 mr-1" />
           {t('send.addMore')}
