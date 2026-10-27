@@ -11,7 +11,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 8080,
-        PUBLIC_ORIGIN: process.env.PUBLIC_ORIGIN || 'http://localhost',
+        PUBLIC_ORIGIN: process.env.PUBLIC_ORIGIN || 'https://send.myftp.org',
         TRUST_PROXY: 'true',
         STUN_URLS: 'stun:stun.l.google.com:19302',
       },
