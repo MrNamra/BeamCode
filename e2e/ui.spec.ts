@@ -70,6 +70,30 @@ test.describe('Phase 4 UI - Responsive & Theming Screenshots', () => {
     fs.copyFileSync(dest360Dark, path.join(ARTIFACT_DIR, 'home-360-dark.png'));
   });
 
+  test('verifies mobile navbar displays brand logo and responsive menu', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto('/');
+
+    // Brand logo image is visible
+    const logoImg = page.locator('[data-testid="brand-link"] img');
+    await expect(logoImg).toBeVisible();
+
+    // Hamburger button is visible on mobile
+    const menuBtn = page.locator('[data-testid="mobile-menu-btn"]');
+    await expect(menuBtn).toBeVisible();
+
+    // Open mobile menu
+    await menuBtn.click();
+    const dropdown = page.locator('[data-testid="mobile-menu-dropdown"]');
+    await expect(dropdown).toBeVisible();
+    await expect(dropdown.locator('text=How it works')).toBeVisible();
+    await expect(dropdown.locator('text=Privacy')).toBeVisible();
+
+    // Close menu
+    await menuBtn.click();
+    await expect(dropdown).not.toBeVisible();
+  });
+
   test('verifies deep link /r/:code opens receive card and auto-joins', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/r/482019');

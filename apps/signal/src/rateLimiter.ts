@@ -34,6 +34,7 @@ export class RateLimiter {
       maxCodesPerIp?: number;
       maxWsPerIp?: number;
       maxMsgsPer10s?: number;
+      exemptLoopback?: boolean;
       now?: () => number;
     } = {}
   ) {}
@@ -45,6 +46,9 @@ export class RateLimiter {
   // WebSocket connection limits (max 20 per IP)
   canConnectWs(ip: string): boolean {
     const norm = normalizeIp(ip);
+    if (this.options.exemptLoopback && (norm === '127.0.0.1' || norm === '::1' || norm === 'localhost')) {
+      return true;
+    }
     const max = this.options.maxWsPerIp ?? 20;
     const current = this.ipWsCount.get(norm) ?? 0;
     return current < max;
@@ -96,12 +100,16 @@ export class RateLimiter {
 
   // Create rate limit (10 / min, max 5 active codes simultaneously)
   canCreateCode(ip: string, activeCodesForIp: number): RateLimitResult {
+    const norm = normalizeIp(ip);
+    if (this.options.exemptLoopback && (norm === '127.0.0.1' || norm === '::1' || norm === 'localhost')) {
+      return { allowed: true };
+    }
+
     const maxActive = this.options.maxCodesPerIp ?? 5;
     if (activeCodesForIp >= maxActive) {
       return { allowed: false, retryAfterMs: 30_000 };
     }
 
-    const norm = normalizeIp(ip);
     const maxPerMin = this.options.rateCreatePerMin ?? 10;
     const windowMs = 60_000;
     const currentTime = this.now;
@@ -131,6 +139,10 @@ export class RateLimiter {
   // Join rate limit (10 / min; 5 failed joins in 10 min -> block for 10 min)
   canJoinCode(ip: string): RateLimitResult {
     const norm = normalizeIp(ip);
+    if (this.options.exemptLoopback && (norm === '127.0.0.1' || norm === '::1' || norm === 'localhost')) {
+      return { allowed: true };
+    }
+
     const currentTime = this.now;
 
     // 1. Check failed joins penalty (5 in 10 min -> blocked for 10 min from last failure)

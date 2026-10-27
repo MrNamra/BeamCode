@@ -9,6 +9,7 @@ This document records deviations from the original specification documents and f
 3. **DTLS Fingerprint Mutual Authentication Phrase**: Implemented a 256-word deterministic hash mapper (`packages/protocol/src/securityPhrase.ts`) that hashes the sorted pair of local and remote DTLS certificate fingerprints, allowing users to mutually confirm cryptographic peer identity and rule out signaling MITM tampering.
 4. **Fully Automatic Transfer on Code Entry (Zero-Click Approval)**: Per user instruction, transfers now start immediately when the receiver enters the 6-digit key (or opens the deep link). The sender automatically approves the join request, and the receiver automatically accepts the file manifest, eliminating manual confirmation prompts on both sides while preserving cancellation and error controls.
 5. **Progressive Web App (PWA) Implementation**: Full PWA capabilities added to `@beamcode/web`, including offline App Shell caching, Web App Manifest (`manifest.webmanifest`), standalone display mode, adaptive/maskable icons, browser install prompt support, and Web Share Target integration (`POST /share-target`) to receive shared files from native mobile OS share sheets directly into the sender queue.
+6. **English-Only UI (Multi-Language Selector Removed)**: Per user instruction, the language selector and non-English locale dictionaries have been removed in favor of a clean, dedicated English UI. This streamlines the header navigation, prevents mobile navbar wrapping, and simplifies user interaction.
 
 ## Future Ideas
 

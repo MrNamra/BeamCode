@@ -461,11 +461,11 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
 
       signaling.on('serverError', (msg) => {
         if (msg.code === 'CODE_UNAVAILABLE') {
-          set({ receiverStep: 'idle', errorMessage: 'Key not found or no longer available.' });
+          set({ role: 'idle', receiverStep: 'idle', errorMessage: 'Key not found or no longer available.' });
         } else if (msg.code === 'RATE_LIMITED') {
-          set({ receiverStep: 'idle', errorMessage: 'Too many attempts. Try again in 40 s.' });
+          set({ role: 'idle', receiverStep: 'idle', errorMessage: 'Too many attempts. Try again in 40 s.' });
         } else {
-          set({ receiverStep: 'idle', errorMessage: msg.message });
+          set({ role: 'idle', receiverStep: 'idle', errorMessage: msg.message });
         }
       });
 

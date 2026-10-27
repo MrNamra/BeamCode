@@ -56,6 +56,7 @@ export async function createSignalServer(
       maxCodesPerIp: config.MAX_CODES_PER_IP,
       maxWsPerIp: config.MAX_WS_PER_IP,
       maxMsgsPer10s: config.MAX_MSGS_PER_10S,
+      exemptLoopback: process.env.NODE_ENV !== 'production',
     });
 
   const codeRegistry =

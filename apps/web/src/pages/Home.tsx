@@ -191,7 +191,7 @@ export function HomePage({ initialCode = '' }: HomeProps) {
           </div>
 
           <div className="flex-1 flex flex-col justify-center py-4">
-            {role !== 'receiver' && receiverStep === 'idle' && (
+            {receiverStep === 'idle' && (
               <CodeInput
                 initialCode={initialCode}
                 onSubmit={startReceiving}

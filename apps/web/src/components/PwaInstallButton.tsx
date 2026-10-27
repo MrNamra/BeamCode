@@ -14,7 +14,7 @@ export function PwaInstallButton() {
     <button
       type="button"
       onClick={triggerInstall}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-xs animate-in fade-in"
+      className="inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 text-xs font-semibold rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-xs animate-in fade-in"
       data-testid="pwa-install-btn"
       title={t('pwa.install')}
       aria-label={t('pwa.install')}
