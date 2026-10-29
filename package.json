@@ -8,6 +8,7 @@
     "build": "pnpm --filter @beamcode/protocol build:optional && pnpm --filter @beamcode/signal build && pnpm --filter @beamcode/web build",
     "lint": "eslint .",
     "typecheck": "pnpm -r run typecheck",
+    "pretest": "pnpm --filter @beamcode/protocol build",
     "test": "vitest run",
     "e2e": "playwright test",
     "bench": "tsx scripts/bench.ts",
