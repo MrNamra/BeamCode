@@ -5,6 +5,8 @@ export class ServiceWorkerStreamSink implements Sink {
   readonly allowsRandomAccess = false;
   private files: ManifestFileItem[] = [];
   private activeStreamId?: string;
+  private currentFileIndex: number | null = null;
+  private streamInitPromise?: Promise<void>;
 
   getFiles(): ManifestFileItem[] {
     return this.files;
@@ -15,10 +17,37 @@ export class ServiceWorkerStreamSink implements Sink {
     // For single file, register download stream immediately
     if (files.length === 1) {
       const file = files[0]!;
+      this.currentFileIndex = file.index;
       this.activeStreamId = `dl_${Date.now()}_${file.index}`;
-      await this.registerStream(this.activeStreamId, file);
+      this.streamInitPromise = this.registerStream(this.activeStreamId, file);
+      await this.streamInitPromise;
       this.triggerBrowserDownload(this.activeStreamId, file.name);
     }
+  }
+
+  private async ensureStreamForFile(fileIndex: number): Promise<void> {
+    if (this.currentFileIndex === fileIndex && this.activeStreamId) {
+      if (this.streamInitPromise) await this.streamInitPromise;
+      return;
+    }
+
+    // If there was a previous active file stream, end it
+    if (this.activeStreamId && navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'STREAM_END',
+        streamId: this.activeStreamId,
+      });
+    }
+
+    const file = this.files.find((f) => f.index === fileIndex);
+    if (!file) return;
+
+    this.currentFileIndex = fileIndex;
+    const streamId = `dl_${Date.now()}_${fileIndex}`;
+    this.activeStreamId = streamId;
+    this.streamInitPromise = this.registerStream(streamId, file);
+    await this.streamInitPromise;
+    this.triggerBrowserDownload(streamId, file.name);
   }
 
   private async registerStream(streamId: string, file: ManifestFileItem): Promise<void> {
@@ -62,8 +91,11 @@ export class ServiceWorkerStreamSink implements Sink {
     }, 60000);
   }
 
-  async write(_fileIndex: number, _offset: number, data: Uint8Array): Promise<void> {
-    if (!this.activeStreamId || !navigator.serviceWorker?.controller) return;
+  async write(fileIndex: number, _offset: number, data: Uint8Array): Promise<void> {
+    if (!navigator.serviceWorker?.controller) return;
+
+    await this.ensureStreamForFile(fileIndex);
+    if (!this.activeStreamId) return;
 
     // Send chunk to Service Worker
     navigator.serviceWorker.controller.postMessage({
@@ -73,17 +105,32 @@ export class ServiceWorkerStreamSink implements Sink {
     });
   }
 
-  async fileEnd(_fileIndex: number): Promise<void> {
+  async fileEnd(fileIndex: number): Promise<void> {
     if (!this.activeStreamId || !navigator.serviceWorker?.controller) return;
+
+    if (this.streamInitPromise) await this.streamInitPromise;
 
     navigator.serviceWorker.controller.postMessage({
       type: 'STREAM_END',
       streamId: this.activeStreamId,
     });
+
+    if (this.currentFileIndex === fileIndex) {
+      this.activeStreamId = undefined;
+      this.currentFileIndex = null;
+      this.streamInitPromise = undefined;
+    }
   }
 
   async close(): Promise<void> {
-    // Finished
+    if (this.activeStreamId && navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'STREAM_END',
+        streamId: this.activeStreamId,
+      });
+      this.activeStreamId = undefined;
+      this.currentFileIndex = null;
+    }
   }
 
   async abort(reason?: string): Promise<void> {
@@ -94,5 +141,7 @@ export class ServiceWorkerStreamSink implements Sink {
       streamId: this.activeStreamId,
       reason,
     });
+    this.activeStreamId = undefined;
+    this.currentFileIndex = null;
   }
 }

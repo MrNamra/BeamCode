@@ -508,8 +508,18 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
 
             let sink: Sink;
             if (saveAsZip && filesToReceive.length > 1) {
-              const memorySink = new MemoryBlobSink();
-              sink = new ZipSink(memorySink);
+              if (caps.hasServiceWorker && !navigator.serviceWorker.controller) {
+                try {
+                  await navigator.serviceWorker.ready;
+                } catch {
+                  // ignore
+                }
+              }
+              const underlyingSink =
+                caps.hasServiceWorker && navigator.serviceWorker?.controller
+                  ? new ServiceWorkerStreamSink()
+                  : new MemoryBlobSink();
+              sink = new ZipSink(underlyingSink);
             } else if (caps.hasServiceWorker) {
               if (!navigator.serviceWorker.controller) {
                 try {

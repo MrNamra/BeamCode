@@ -4,7 +4,7 @@
     "howItWorks": "How it works",
     "privacy": "Privacy"
   },
-  "trust": "Files go straight from device to device. Nothing is stored on our servers.",
+  "trust": "Direct peer-to-peer file transfer. No file size limits. Nothing is stored on our servers.",
   "tabs": {
     "send": "Send",
     "receive": "Receive"
@@ -17,7 +17,7 @@
     "selectFolder": "Select folder",
     "addMore": "Add more",
     "sendButton": "Send",
-    "mobileWarning": "Receiving > 2 GB on mobile without streaming may run low on memory.",
+    "unlimitedNotice": "No file size limit — files stream directly between devices with zero server storage.",
     "filesCount": "{{count}} files · {{size}}",
     "oneFileCount": "1 file · {{size}}"
   },
@@ -81,9 +81,9 @@
     "unsupported": "Please use a recent Chrome, Edge, Firefox, or Safari."
   },
   "gating": {
-    "fsAccess": "Direct to disk (streamed)",
-    "serviceWorker": "Download stream (Service Worker)",
-    "memory": "Memory (large files may fail)"
+    "fsAccess": "Direct to disk (unlimited size)",
+    "serviceWorker": "Direct streaming (unlimited size)",
+    "memory": "In-memory transfer"
   },
   "badge": {
     "lan": "LAN",

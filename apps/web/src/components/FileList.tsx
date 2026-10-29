@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { FileText, Image, Video, Music, Archive, File as FileIcon, X, Plus, UploadCloud } from 'lucide-react';
+import { FileText, Image, Video, Music, Archive, File as FileIcon, X, Plus, UploadCloud, Zap } from 'lucide-react';
 import { SelectedFileItem } from '../core/state/transferStore.js';
 import { useTranslation } from '../i18n/index.js';
 
@@ -70,7 +70,6 @@ export function FileList({
 
   const totalBytes = files.reduce((acc, f) => acc + f.meta.size, 0);
   const totalCount = files.length;
-  const isLargeTransfer = totalBytes > 2 * 1024 * 1024 * 1024; // > 2 GB
 
   const handleAddMoreClick = () => {
     onAddMore?.();
@@ -205,12 +204,11 @@ export function FileList({
         </button>
       </div>
 
-      {/* Soft warning for > 2 GB */}
-      {isLargeTransfer && (
-        <div className="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-800 dark:text-amber-300">
-          {t('send.mobileWarning')}
-        </div>
-      )}
+      {/* Unlimited P2P transfer badge */}
+      <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+        <Zap className="w-4 h-4 text-emerald-500 shrink-0" />
+        <span>{t('send.unlimitedNotice')}</span>
+      </div>
 
       {/* Primary Send Button */}
       <button
