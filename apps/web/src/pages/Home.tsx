@@ -23,6 +23,7 @@ export function HomePage({ initialCode = '' }: HomeProps) {
     senderStep,
     receiverStep,
     selectedFiles,
+    receivedFiles,
     saveAsZip,
     code,
     codeExpiresAt,
@@ -98,71 +99,115 @@ export function HomePage({ initialCode = '' }: HomeProps) {
             <h1 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {t('tabs.send')}
             </h1>
-            <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                role === 'receiver' ? 'bg-slate-300 dark:bg-slate-600' : 'bg-blue-600 dark:bg-blue-400'
+              }`}
+            />
           </div>
 
           <div className="flex-1 flex flex-col justify-center py-4">
-            {role !== 'sender' && selectedFiles.length === 0 && (
-              <DropZone onFilesSelected={addFiles} />
-            )}
+            {role === 'receiver' ? (
+              <div
+                className="flex flex-col items-center justify-center text-center py-8 space-y-3"
+                data-testid="send-disabled-state"
+              >
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-emerald-500">
+                  <ArrowDownLeft className="w-6 h-6 animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    {receiverStep === 'completed'
+                      ? t('busy.receivingCompleted')
+                      : t('busy.receivingTitle')}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                    {t('busy.receivingDesc')}
+                  </p>
+                </div>
+                {receiverStep === 'completed' ? (
+                  <button
+                    type="button"
+                    onClick={resetReceiver}
+                    className="mt-2 px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                  >
+                    {t('busy.startSending')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('receive')}
+                    className="mt-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    {t('busy.viewReceiving')}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                {role === 'idle' && selectedFiles.length === 0 && (
+                  <DropZone onFilesSelected={addFiles} />
+                )}
 
-            {role !== 'sender' && selectedFiles.length > 0 && (
-              <FileList
-                files={selectedFiles}
-                onRemove={removeFile}
-                onAddFiles={addFiles}
-                onSend={startSending}
-                isSending={senderStep === 'creating_code'}
-              />
-            )}
+                {role === 'idle' && selectedFiles.length > 0 && (
+                  <FileList
+                    files={selectedFiles}
+                    onRemove={removeFile}
+                    onAddFiles={addFiles}
+                    onSend={startSending}
+                    isSending={senderStep === 'creating_code'}
+                  />
+                )}
 
-            {role === 'sender' &&
-              (senderStep === 'waiting_receiver' ||
-                senderStep === 'receiver_request' ||
-                senderStep === 'connecting') && (
-                <CodeDisplay
-                  code={code}
-                  expiresAt={codeExpiresAt}
-                  receiverDeviceName={receiverDeviceName}
-                  step={senderStep}
-                  onAcceptReceiver={acceptReceiver}
-                  onDeclineReceiver={declineReceiver}
-                  onCancel={() => cancelTransfer('Sender cancelled')}
-                />
-              )}
+                {role === 'sender' &&
+                  (senderStep === 'waiting_receiver' ||
+                    senderStep === 'receiver_request' ||
+                    senderStep === 'connecting') && (
+                    <CodeDisplay
+                      code={code}
+                      expiresAt={codeExpiresAt}
+                      receiverDeviceName={receiverDeviceName}
+                      step={senderStep}
+                      onAcceptReceiver={acceptReceiver}
+                      onDeclineReceiver={declineReceiver}
+                      onCancel={() => cancelTransfer('Sender cancelled')}
+                    />
+                  )}
 
-            {role === 'sender' && senderStep === 'transferring' && (
-              <ProgressCard
-                title={t('progress.sending')}
-                progress={progress}
-                files={selectedFiles}
-                connectionType={connectionType}
-                onCancel={() => cancelTransfer('Sender cancelled')}
-              />
-            )}
+                {role === 'sender' && senderStep === 'transferring' && (
+                  <ProgressCard
+                    title={t('progress.sending')}
+                    progress={progress}
+                    files={selectedFiles}
+                    connectionType={connectionType}
+                    onCancel={() => cancelTransfer('Sender cancelled')}
+                  />
+                )}
 
-            {role === 'sender' && senderStep === 'completed' && (
-              <ResultCard type="completed_sender" onAction={resetSender} />
-            )}
+                {role === 'sender' && senderStep === 'completed' && (
+                  <ResultCard type="completed_sender" onAction={resetSender} />
+                )}
 
-            {role === 'sender' && senderStep === 'expired' && (
-              <ResultCard type="expired" onAction={resetSender} />
-            )}
+                {role === 'sender' && senderStep === 'expired' && (
+                  <ResultCard type="expired" onAction={resetSender} />
+                )}
 
-            {role === 'sender' && senderStep === 'declined' && (
-              <ResultCard type="declined" onAction={resetSender} />
-            )}
+                {role === 'sender' && senderStep === 'declined' && (
+                  <ResultCard type="declined" onAction={resetSender} />
+                )}
 
-            {role === 'sender' && senderStep === 'failed' && (
-              <ResultCard
-                type="failed"
-                errorMessage={errorMessage}
-                onAction={resetSender}
-              />
-            )}
+                {role === 'sender' && senderStep === 'failed' && (
+                  <ResultCard
+                    type="failed"
+                    errorMessage={errorMessage}
+                    onAction={resetSender}
+                  />
+                )}
 
-            {role === 'sender' && senderStep === 'cant_connect' && (
-              <ResultCard type="cant_connect" onAction={resetSender} />
+                {role === 'sender' && senderStep === 'cant_connect' && (
+                  <ResultCard type="cant_connect" onAction={resetSender} />
+                )}
+              </>
             )}
           </div>
 
@@ -182,84 +227,128 @@ export function HomePage({ initialCode = '' }: HomeProps) {
             <h1 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {t('tabs.receive')}
             </h1>
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span
+              className={`w-2 h-2 rounded-full ${
+                role === 'sender' ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-500'
+              }`}
+            />
           </div>
 
           <div className="flex-1 flex flex-col justify-center py-4">
-            {receiverStep === 'idle' && (
-              <CodeInput
-                initialCode={initialCode}
-                onSubmit={startReceiving}
-                errorMessage={errorMessage}
-              />
-            )}
-
-            {role === 'receiver' &&
-              (receiverStep === 'connecting_code' || receiverStep === 'connecting') && (
-                <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center animate-in fade-in">
-                  <div className="w-12 h-12 rounded-full border-4 border-blue-500/20 border-t-blue-600 animate-spin" />
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                    {t('receive.connecting')}
+            {role === 'sender' ? (
+              <div
+                className="flex flex-col items-center justify-center text-center py-8 space-y-3"
+                data-testid="receive-disabled-state"
+              >
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-blue-500">
+                  <ArrowUpRight className="w-6 h-6 animate-pulse" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    {senderStep === 'completed'
+                      ? t('busy.sendingCompleted')
+                      : t('busy.sendingTitle')}
                   </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                    {t('busy.sendingDesc')}
+                  </p>
+                </div>
+                {senderStep === 'completed' ? (
                   <button
                     type="button"
-                    onClick={() => cancelTransfer('Receiver cancelled')}
-                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline"
+                    onClick={resetSender}
+                    className="mt-2 px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                   >
-                    {t('codeDisplay.cancel')}
+                    {t('busy.startReceiving')}
                   </button>
-                </div>
-              )}
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('send')}
+                    className="mt-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    {t('busy.viewSending')}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                {role === 'idle' && (
+                  <CodeInput
+                    initialCode={initialCode}
+                    onSubmit={startReceiving}
+                    errorMessage={errorMessage}
+                  />
+                )}
 
-            {role === 'receiver' && receiverStep === 'review' && (
-              <ReceiverReview
-                senderDeviceName={senderDeviceName}
-                files={selectedFiles}
-                saveAsZip={saveAsZip}
-                onToggleZip={setSaveAsZip}
-                onToggleFile={toggleFileSelection}
-                onAccept={acceptTransfer}
-                onDecline={declineTransfer}
-                isConnecting={false}
-              />
-            )}
+                {role === 'receiver' &&
+                  (receiverStep === 'connecting_code' || receiverStep === 'connecting') && (
+                    <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center animate-in fade-in">
+                      <div className="w-12 h-12 rounded-full border-4 border-blue-500/20 border-t-blue-600 animate-spin" />
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                        {t('receive.connecting')}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => cancelTransfer('Receiver cancelled')}
+                        className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline"
+                      >
+                        {t('codeDisplay.cancel')}
+                      </button>
+                    </div>
+                  )}
 
-            {role === 'receiver' && receiverStep === 'transferring' && (
-              <ProgressCard
-                title={t('progress.receiving')}
-                progress={progress}
-                files={selectedFiles}
-                connectionType={connectionType}
-                onCancel={() => cancelTransfer('Receiver cancelled')}
-              />
-            )}
+                {role === 'receiver' && receiverStep === 'review' && (
+                  <ReceiverReview
+                    senderDeviceName={senderDeviceName}
+                    files={receivedFiles}
+                    saveAsZip={saveAsZip}
+                    onToggleZip={setSaveAsZip}
+                    onToggleFile={toggleFileSelection}
+                    onAccept={acceptTransfer}
+                    onDecline={declineTransfer}
+                    isConnecting={false}
+                  />
+                )}
 
-            {role === 'receiver' && receiverStep === 'completed' && (
-              <ResultCard
-                type="completed_receiver"
-                fileCount={selectedFiles.length}
-                onAction={resetReceiver}
-              />
-            )}
+                {role === 'receiver' && receiverStep === 'transferring' && (
+                  <ProgressCard
+                    title={t('progress.receiving')}
+                    progress={progress}
+                    files={receivedFiles}
+                    connectionType={connectionType}
+                    onCancel={() => cancelTransfer('Receiver cancelled')}
+                  />
+                )}
 
-            {role === 'receiver' && receiverStep === 'expired' && (
-              <ResultCard type="expired" onAction={resetReceiver} />
-            )}
+                {role === 'receiver' && receiverStep === 'completed' && (
+                  <ResultCard
+                    type="completed_receiver"
+                    fileCount={receivedFiles.length}
+                    onAction={resetReceiver}
+                  />
+                )}
 
-            {role === 'receiver' && receiverStep === 'declined' && (
-              <ResultCard type="declined" onAction={resetReceiver} />
-            )}
+                {role === 'receiver' && receiverStep === 'expired' && (
+                  <ResultCard type="expired" onAction={resetReceiver} />
+                )}
 
-            {role === 'receiver' && receiverStep === 'failed' && (
-              <ResultCard
-                type="failed"
-                errorMessage={errorMessage}
-                onAction={resetReceiver}
-              />
-            )}
+                {role === 'receiver' && receiverStep === 'declined' && (
+                  <ResultCard type="declined" onAction={resetReceiver} />
+                )}
 
-            {role === 'receiver' && receiverStep === 'cant_connect' && (
-              <ResultCard type="cant_connect" onAction={resetReceiver} />
+                {role === 'receiver' && receiverStep === 'failed' && (
+                  <ResultCard
+                    type="failed"
+                    errorMessage={errorMessage}
+                    onAction={resetReceiver}
+                  />
+                )}
+
+                {role === 'receiver' && receiverStep === 'cant_connect' && (
+                  <ResultCard type="cant_connect" onAction={resetReceiver} />
+                )}
+              </>
             )}
           </div>
 

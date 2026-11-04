@@ -60,6 +60,8 @@ export const ControlFileEndSchema = z.object({
 export const ControlAckSchema = z.object({
   t: z.literal('ack'),
   bytes: z.number().int().nonnegative(),
+  speedMBs: z.string().optional(),
+  eta: z.string().optional(),
 });
 
 export const ControlDoneSchema = z.object({

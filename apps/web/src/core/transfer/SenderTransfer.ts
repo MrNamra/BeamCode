@@ -46,6 +46,8 @@ export class SenderTransfer {
   private seq = 0;
   private isCancelled = false;
   private speedMeter = new SpeedMeter();
+  private remoteSpeedMBs?: string;
+  private remoteETA?: string;
 
   private ackResolvers: (() => void)[] = [];
   private doneResolver?: () => void;
@@ -76,8 +78,17 @@ export class SenderTransfer {
         const msg: ControlMessage = parseControlMessage(JSON.parse(raw));
 
         if (msg.t === 'ack') {
+          const delta = Math.max(0, msg.bytes - this.bytesAcked);
           this.bytesAcked = msg.bytes;
-          this.speedMeter.addBytes(msg.bytes);
+          if (delta > 0) {
+            this.speedMeter.addBytes(delta);
+          }
+          if (msg.speedMBs) {
+            this.remoteSpeedMBs = msg.speedMBs;
+          }
+          if (msg.eta) {
+            this.remoteETA = msg.eta;
+          }
 
           // Resolve pending flow control promises
           const resolvers = this.ackResolvers.splice(0, this.ackResolvers.length);
@@ -104,8 +115,8 @@ export class SenderTransfer {
       bytesSent: this.bytesSent,
       bytesAcked: this.bytesAcked,
       totalBytes: this.totalBytes,
-      speedMBs: this.speedMeter.getFormattedSpeed('MB/s'),
-      eta: this.speedMeter.getFormattedETA(this.totalBytes - this.bytesAcked),
+      speedMBs: this.remoteSpeedMBs || this.speedMeter.getFormattedSpeed('MB/s'),
+      eta: this.remoteETA || this.speedMeter.getFormattedETA(this.totalBytes - this.bytesAcked),
     });
   }
 

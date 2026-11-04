@@ -53,6 +53,10 @@ describe('control protocol messages', () => {
     expect(safeParseControlMessage({ t: 'start', transferId: 'tr-1' }).success).toBe(true);
     expect(safeParseControlMessage({ t: 'file-end', index: 0 }).success).toBe(true);
     expect(safeParseControlMessage({ t: 'ack', bytes: 65536 }).success).toBe(true);
+    expect(
+      safeParseControlMessage({ t: 'ack', bytes: 65536, speedMBs: '12.5 MB/s', eta: '00:15' })
+        .success
+    ).toBe(true);
     expect(safeParseControlMessage({ t: 'done', ok: true, bytes: 2048 }).success).toBe(true);
     expect(safeParseControlMessage({ t: 'cancel', by: 'sender', reason: 'user cancelled' }).success).toBe(true);
     expect(safeParseControlMessage({ t: 'cancel', by: 'receiver' }).success).toBe(true);

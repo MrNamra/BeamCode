@@ -68,7 +68,7 @@ export function ProgressCard({
         {/* Speed & ETA stats */}
         <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-slate-400 pt-1">
           <span className="font-semibold tabular-nums" data-testid="transfer-speed-display">
-            {progress.speedMBs} MB/s
+            {progress.speedMBs}
           </span>
           <span className="tabular-nums" data-testid="transfer-eta-display">
             {t('progress.eta', { eta: progress.eta })}

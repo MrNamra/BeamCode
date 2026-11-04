@@ -96,5 +96,17 @@
   "pwa": {
     "install": "Install App",
     "installed": "App installed"
+  },
+  "busy": {
+    "receivingTitle": "Receiving in progress",
+    "receivingDesc": "You cannot send files while receiving. Finish or cancel the receive transfer first.",
+    "viewReceiving": "View receive transfer",
+    "sendingTitle": "Sending in progress",
+    "sendingDesc": "You cannot receive files while sending. Finish or cancel the send transfer first.",
+    "viewSending": "View send transfer",
+    "startSending": "Start sending",
+    "startReceiving": "Start receiving",
+    "receivingCompleted": "Receiving completed",
+    "sendingCompleted": "Sending completed"
   }
 }

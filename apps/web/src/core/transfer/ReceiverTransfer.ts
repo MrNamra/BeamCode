@@ -37,6 +37,7 @@ export class ReceiverTransfer {
 
   private reorderBuffer: ReorderBuffer;
   private speedMeter = new SpeedMeter();
+  private lastProgressTime = 0;
 
   private bytesWritten = 0;
   private bytesAcked = 0;
@@ -146,7 +147,12 @@ export class ReceiverTransfer {
     this.notifyProgress();
   }
 
-  private notifyProgress(): void {
+  private notifyProgress(force = false): void {
+    const now = Date.now();
+    if (!force && now - this.lastProgressTime < 100) {
+      return;
+    }
+    this.lastProgressTime = now;
     this.options.onProgress?.({
       bytesReceived: this.bytesWritten,
       totalBytes: this.totalExpectedBytes,
@@ -165,10 +171,14 @@ export class ReceiverTransfer {
 
   private sendAck(): void {
     if (this.ctrlChannel.readyState === 'open') {
+      const speedMBs = this.speedMeter.getFormattedSpeed('MB/s');
+      const eta = this.speedMeter.getFormattedETA(this.totalExpectedBytes - this.bytesWritten);
       this.ctrlChannel.send(
         JSON.stringify({
           t: 'ack',
           bytes: this.bytesWritten,
+          speedMBs,
+          eta,
         })
       );
       this.bytesAcked = this.bytesWritten;
@@ -221,6 +231,7 @@ export class ReceiverTransfer {
         );
       }
 
+      this.notifyProgress(true);
       this.options.onDone?.();
       this.donePromiseResolve?.();
     }

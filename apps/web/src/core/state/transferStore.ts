@@ -65,8 +65,10 @@ interface TransferStoreState {
   senderStep: SenderStep;
   receiverStep: ReceiverStep;
 
-  // Selected files (Sender or Receiver)
+  // Selected files (Sender)
   selectedFiles: SelectedFileItem[];
+  // Received files (Receiver)
+  receivedFiles: SelectedFileItem[];
   saveAsZip: boolean;
 
   // Code & Session info
@@ -135,6 +137,7 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
   receiverStep: 'idle',
 
   selectedFiles: [],
+  receivedFiles: [],
   saveAsZip: false,
 
   code: '',
@@ -196,16 +199,23 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
   },
 
   toggleFileSelection: (index: number) => {
-    const updated = get().selectedFiles.map((item, idx) => {
+    const isReceiver = get().role === 'receiver';
+    const list = isReceiver ? get().receivedFiles : get().selectedFiles;
+    const updated = list.map((item, idx) => {
       if (idx === index) {
         return { ...item, checked: !item.checked };
       }
       return item;
     });
-    set({ selectedFiles: updated });
+    if (isReceiver) {
+      set({ receivedFiles: updated });
+    } else {
+      set({ selectedFiles: updated });
+    }
   },
 
   startSending: async () => {
+    if (get().role === 'receiver') return;
     const files = get().selectedFiles;
     if (files.length === 0) return;
 
@@ -429,7 +439,7 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
     if (get().role === 'sender') {
       set({ senderStep: 'idle', role: 'idle' });
     } else {
-      set({ receiverStep: 'idle', role: 'idle' });
+      set({ receiverStep: 'idle', role: 'idle', receivedFiles: [] });
     }
   },
 
@@ -447,6 +457,7 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
   },
 
   startReceiving: async (codeToJoin: string) => {
+    if (get().role === 'sender') return;
     const cleanCode = codeToJoin.replace(/\s+/g, '');
     if (!/^\d{6}$/.test(cleanCode)) return;
 
@@ -496,7 +507,7 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
             }));
 
             set({
-              selectedFiles: items,
+              receivedFiles: items,
               receiverStep: 'connecting',
               senderDeviceName: manifest.transferId,
             });
@@ -701,7 +712,7 @@ export const useTransferStore = create<TransferStoreState>((set, get) => ({
     set({
       role: 'idle',
       receiverStep: 'idle',
-      selectedFiles: [],
+      receivedFiles: [],
       errorMessage: null,
       code: '',
       codeExpiresAt: null,
